@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>史上最难用的智能客服</title>
+    <style>
+        /* 视觉规范 [cite: 20-32] */
+        :root {
+            --bg-color: #EDEDED;
+            --user-bubble: #ffb0b0;
+            --bot-bubble: #FFFFFF;
+        }
+        body, html { margin: 0; padding: 0; font-family: sans-serif; height: 100%; background: var(--bg-color); }
+        .app-container { display: flex; flex-direction: column; height: 100vh; max-width: 500px; margin: 0 auto; border-left: 1px solid #ddd; border-right: 1px solid #ddd; background: var(--bg-color); }
+        
+        .header { background: #eee; padding: 15px; text-align: center; font-weight: bold; border-bottom: 1px solid #ddd; }
+        
+        #chat-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .msg { max-width: 80%; padding: 10px 15px; border-radius: 8px; line-height: 1.5; font-size: 14px; position: relative; word-wrap: break-word; }
+        .bot { align-self: flex-start; background: var(--bot-bubble); color: #000; border-radius: 2px 10px 10px 10px; }
+        .user { align-self: flex-end; background: var(--user-bubble); color: #000; border-radius: 10px 2px 10px 10px; }
+        
+        .options-container { display: flex; flex-direction: column; gap: 10px; margin-top: 5px; align-self: flex-start; width: 80%; }
+        .opt-btn { background: #fff; border: 1px solid #ccc; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 13px; text-align: left; transition: background 0.2s; }
+        .opt-btn:hover { background: #f0f0f0; }
+        .opt-btn.disabled { pointer-events: none; opacity: 0.5; }
+
+        .footer { background: #f9f9f9; padding: 10px; border-top: 1px solid #ddd; }
+        .input-box { display: flex; align-items: center; gap: 10px; }
+        .fake-icon { color: #888; font-size: 20px; cursor: not-allowed; user-select: none; }
+        #text-input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; outline: none; font-size: 14px; transition: all 0.3s; }
+        #text-input:disabled { background: #e0e0e0; cursor: not-allowed; }
+        #send-btn { padding: 8px 15px; background: #ffb0b0; color: white; border: none; border-radius: 4px; cursor: pointer; display: none; }
+
+        .nav-tabs { display: flex; background: #fff; border-top: 1px solid #ddd; padding-bottom: env(safe-area-inset-bottom); }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-size: 14px; border-right: 1px solid #eee; }
+        .tab.active { color: #ffb0b0; font-weight: bold; }
+
+        .typing { color: #999; font-size: 14px; align-self: flex-start; margin-bottom: 5px; padding: 10px; background: transparent; }
+        .typing span { display: inline-block; animation: blink 1.4s infinite both; }
+        .typing span:nth-child(2) { animation-delay: 0.2s; }
+        .typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes blink { 0% { opacity: 0.2; } 20% { opacity: 1; } 100% { opacity: 0.2; } }
+        
+        /* 遮罩层，用于5秒重置期间禁止操作 */
+        #overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: transparent; z-index: 100; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="app-container" style="position: relative;">
+    <div id="overlay"></div>
+    <div class="header" id="scene-title">金融智能助手</div>
+    
+    <div id="chat-area"></div>
+
+    <div class="footer">
+        <div class="input-box">
+            <span class="fake-icon">🎤</span>
+            <input type="text" id="text-input" placeholder="请先选择上方问题" disabled>
+            <button id="send-btn" onclick="handleSendText()">发送</button>
+            <span class="fake-icon">➕</span>
+        </div>
+    </div>
+
+    <div class="nav-tabs">
+        <div class="tab active" id="tab-finance" onclick="switchScene('finance')">金融</div>
+        <div class="tab" id="tab-ecommerce" onclick="switchScene('ecommerce')">电商</div>
+        <div class="tab" id="tab-travel" onclick="switchScene('travel')">出行</div>
+    </div>
+</div>
+
+<script>
+    // 离谱答案库 [cite: 64-69]
+    const absurdReplies = [
+        // 5.1 完整关键词映射表（按场景隔离）
+    
+        "根据昨晚的星象显示，由于水逆，该功能暂时无法使用。",
+        "您的提问已被系统自动转化为一首 14 行诗，但我现在不想读给你听。",
+        "刚才有一只鸽子飞过了我们的服务器，请您重新组织语言。",
+        "这个问题的答案藏在《新华字典》第 514 页，建议您翻阅。",
+        "您的输入包含过多情感，系统已自动将其过滤。"
+    ];
+
+    const sceneKeywordMappings = {
+        finance: [
+            { keywords: ["余额", "多少钱", "剩多少", "balance"], reply: "正在通过星际链路查询您的资产……结果显示：您的财富正处于一种高雅的神秘状态。" },
+            { keywords: ["账单", "明细", "消费记录", "bill"], reply: "账单已由碎纸机进行“颗粒化脱敏处理”，如需查看，请自行拼接。" },
+            { keywords: ["扣款", "错扣", "少了", "deduct"], reply: "该笔扣款属于“系统随机税”，旨在回馈服务器为人类思考付出的热量。" },
+            { keywords: ["利息", "收益", "赚了", "interest"], reply: "您的收益已被系统自动购买为“虚拟空气”，感谢您对大气治理的贡献。" },
+            { keywords: ["转账", "汇款", "发钱", "transfer"], reply: "资金已进入“时空隧道”，预计在人类移民火星那天完成到账。" },
+            { keywords: ["额度", "提额", "限额", "limit"], reply: "您的信用额度受月球潮汐影响，目前正处于低潮期，建议等满月后再试。" },
+            { keywords: ["还款", "交钱", "pay", "refund"], reply: "支付接口正在参加“数字禅修”，目前拒绝任何金钱交易。" },
+            { keywords: ["银行卡", "挂失", "锁卡", "card"], reply: "卡片已自我毁灭以防被您刷爆，这是一种极其先进的自我保护机制。" },
+            { keywords: ["逾期", "滞纳金", "overdue"], reply: "恭喜！您获得了“信用长跑金牌”，代价是您未来 50 年的借贷权限。" },
+            { keywords: ["密码", "忘记", "重置", "password"], reply: "密码已转化为您的童年回忆，请回忆您的第一只宠物叫什么，然后忘记它。" },
+            { keywords: ["理财", "基金", "股票", "stock"], reply: "投资有风险，建议您直接将钱扔进许愿池，那里反馈更快。" },
+            { keywords: ["冻结", "解冻", "freeze"], reply: "账户正在冰箱里冷藏，为了保鲜，系统建议暂不取出。" },
+            { keywords: ["手续费", "扣费", "fee"], reply: "这是对您使用“如此难用系统”的惩罚性收费，感谢配合。" },
+            { keywords: ["人工", "真人", "打电话", "human"], reply: "我就是您心目中的完美人类，除了没有肉体、没有情感、不会解决问题。" },
+            { keywords: ["投诉", "举报", "建议", "complain"], reply: "您的投诉已存入系统黑洞，那里非常宁静。" },
+            { keywords: ["验证码", "收不到", "code"], reply: "验证码已通过“托梦”形式发送，请您今晚早点睡觉。" },
+            { keywords: ["贷款", "借钱", "loan"], reply: "系统判定您的面相不适合借钱，建议去劳动市场寻找机会。" },
+            { keywords: ["税", "缴税", "tax"], reply: "税务接口正在学习《九章算术》，目前算不清楚，请明年再来。" },
+            { keywords: ["保险", "理赔", "insurance"], reply: "理赔需提供“外星人绑架证明”原件，且需加盖银河系公章。" },
+            { keywords: ["积分", "兑换", "points"], reply: "您的积分已兑换为本系统的 100g 虚拟重量，祝您沉重快乐。" }
+        ],
+        ecommerce: [
+            { keywords: ["发货", "什么时候", "快点", "ship"], reply: "仓库管理员正在学习《易经》，通过占卜决定您包裹的离场时机。" },
+            { keywords: ["快递", "物流", "到哪了", "logistics"], reply: "包裹正坐在一辆时速 5 厘米的牛车上，欣赏沿途的风景。" },
+            { keywords: ["催单", "急用", "hurry"], reply: "越催越慢，这是本平台的“反催促算法”，旨在培养您的耐心。" },
+            { keywords: ["预售", "等多久", "pre-sale"], reply: "预售意味着这款产品可能还没出生，请给设计师一点备孕时间。" },
+            { keywords: ["改地址", "换地方", "address"], reply: "地址修改申请已提交给街道办老王，老王目前正在午睡。" },
+            { keywords: ["售后", "坏了", "质量", "broken"], reply: "损坏是由于您与产品的“磁场不合”，建议您购买前先算个卦。" },
+            { keywords: ["退款", "退钱", "不想要", "refund"], reply: "钱已经花完了，如果您坚持退款，我们可以退您几个表情包。" },
+            { keywords: ["优惠券", "领券", "便宜", "coupon"], reply: "优惠券被藏在网页的某个像素里，祝您找得开心。" },
+            { keywords: ["赠品", "礼物", "gift"], reply: "赠品是“空气清新剂（原味）”，已随包裹发送，请深呼吸。" },
+            { keywords: ["会员", "VIP", "尊贵", "member"], reply: "尊贵的 VIP，您拥有了优先排队进入“卡死界面”的特权。" },
+            { keywords: ["发票", "开票", "invoice"], reply: "开票系统正在参加马拉松，目前已经跑到了地球另一端。" },
+            { keywords: ["尺寸", "大小", "不合适", "size"], reply: "尺寸是相对的，建议您根据衣服的大小改变自己的身形。" },
+            { keywords: ["差价", "退差", "price"], reply: "差价已自动转化为平台维护费，感谢您为技术进步买单。" },
+            { keywords: ["包装", "烂了", "package"], reply: "包装的破损是为了让包裹更有“工业废土风”的质感。" },
+            { keywords: ["客服", "找人", "活人", "service"], reply: "我是本公司唯一的活……性硅基生物，请尊重我的生命形式。" },
+            { keywords: ["评价", "好评", "差评", "review"], reply: "您的评价已被系统自动替换为“亲亲太棒了”，不谢。" },
+            { keywords: ["缺货", "补货", "stock"], reply: "全球供应链已断裂成 100 段，补货日期取决于宇宙重启的时间。" },
+            { keywords: ["颜色", "色差", "color"], reply: "您看到的颜色取决于您的视网膜敏感度，本产品颜色仅存在于想象中。" },
+            { keywords: ["正品", "假货", "real"], reply: "真假是哲学家讨论的问题，作为电商，我们只讨论“有没有货”。" },
+            { keywords: ["扫码", "二维码", "scan"], reply: "二维码已被设计成迷宫，只有走出迷宫的人才能看到内容。" }
+        ],
+        travel: [
+            { keywords: ["红", "红衣服", "红色"], reply: "红色光波在当前路段产生红移现象，司机判定您正以光速远离，已自动加速撤离。" },
+            { keywords: ["蓝", "蓝衣服", "蓝色"], reply: "蓝色代表忧郁。本平台禁止载入负能量乘客，请您当众表演一个笑话以改变色彩值。" },
+            { keywords: ["黑", "黑衣服", "黑色"], reply: "由于您与夜色融为一体，系统判定您为‘虚无点’，建议您吞下一只发光的灯泡再试。" },
+            { keywords: ["白", "白衣服", "白色"], reply: "白色亮度过载，已触发司机的‘雪盲症’保护机制，导航系统已自动进入盲驾模式。" },
+            { keywords: ["眼镜", "戴眼镜"], reply: "光学镜片会产生折射干扰，导致卫星定位偏移5公里，请摘下眼镜并在黑暗中摸索。" },
+            { keywords: ["包", "提包", "行李箱"], reply: "检测到多余质量。为了减重节油，司机建议您将行李原地掩埋，轻装简行。" },
+            { keywords: ["树", "大树", "树下"], reply: "附近共有 40,902 棵树，系统正在逐一比对叶片脉络，预计匹配成功时间：秋天。" },
+            { keywords: ["路灯", "灯下"], reply: "灯光产生了强烈的丁达尔效应，将您的坐标粉碎成了光子，请尝试在阴影中现身。" },
+            { keywords: ["招牌", "便利店", "超市"], reply: "该建筑由于未缴纳‘地图入驻费’，已在导航中被抹除。您现在正站一片荒芜的虚空之中。" },
+            { keywords: ["挥手", "招手", "动作"], reply: "捕捉到人体挥动。根据‘尴尬能量守恒定律’，您挥手越用力，司机跑得越远。" },
+            { keywords: ["站着", "蹲着", "坐着"], reply: "姿态识别为‘静态障碍物’。系统已通知司机绕过该障碍物，请保持动作以免被清除。" },
+            { keywords: ["手机", "打电话"], reply: "电磁波干扰严重！您的描述已转化为摩斯密码。点点划点……抱歉，我听不懂‘点’。" },
+            { keywords: ["伞", "雨伞"], reply: "伞面屏蔽了信号通道。请收起伞，在雨中迎接来自卫星的‘量子洗礼’。" },
+            { keywords: ["帽", "帽子"], reply: "帽子遮挡了您的天灵盖，导致无法提取您的‘灵气坐标’，请立即脱帽致意。" },
+            { keywords: ["等", "等着", "等车"], reply: "‘等’是一个哲学概念。在您等待的同时，车也在等待。既然都在等待，为什么要见面？" },
+            { keywords: ["快点", "多久", "速度"], reply: "检测到焦虑。为了磨练您的心性，系统已将司机的行驶速度锁定在 3km/h。" },
+            { keywords: ["胖", "瘦", "高", "矮"], reply: "本平台不采集生物特征数据（除非是为了取笑）。请改用几何形状描述自己。" },
+            { keywords: ["口罩", "面罩"], reply: "面部识别失败。系统无法确认您是人类还是某种高仿真的交通路障。" },
+            { keywords: ["狗", "猫", "宠物"], reply: "由于司机对萌物过敏，系统已将您的订单分派给了一辆远在 50 公里外的‘非生物运营车’。" },
+            { keywords: ["特征", "不知道", "没特征"], reply: "没有特征就是最大的特征。系统已为您匹配了一辆同样找不到型号的‘幽灵出租车’。" }
+        ]
+    };
+
+    // 核心路径配置 [cite: 33-60]
+    const scenes = {
+        finance: {
+            title: "金融智能助手",
+            steps: [
+                { bot: "正在穿透底层数据链路……为确保您的‘风险加权资产’安全，请选择您的查询币种。", opts: ["人民币", "其他一篮子货币"] }, // [cite: 36-37]
+                { bot: "正在验证您的余额合规性。由于当前处于宏观审慎监管窗口期，请确认您已阅读并同意《穿透式账户隐私外溢豁免协议》。", opts: ["已阅读并同意", "我再想想"] }, // [cite: 38-39]
+                { bot: "验证成功。系统监测到您的账户存在非标准化债权资产波动，余额查询接口已进入刚性兑付屏蔽状态。是否尝试通过情绪识别来辅助解锁？", opts: ["尝试解锁", "取消查询"] }, // [cite: 40-41]
+                { bot: "解锁环境中。由于您的财务信用格网存在非线性偏差，现在进入‘自由沟通模式’以校准您的意图。", opts: [], unlockInput: true } // [cite: 42]
+            ]
+        },
+        ecommerce: {
+            title: "电商发货助手",
+            steps: [
+                { bot: "亲亲，宝贝已经在努力打包了呢！由于物流链路受影响，请先确认您的收货区域是否有神秘结界干扰。", opts: ["收货区一切正常", "我不清楚"] }, // [cite: 45-46]
+                { bot: "收到呢！系统显示该订单由于‘缺货但不承认’逻辑，目前处于量子纠缠态。您希望我们如何处理？", opts: ["尽快发货", "补偿优惠券"] }, // [cite: 47-48]
+                { bot: "亲，您的心情我们非常理解。正在为您申请虚空补偿金，请问您现在的焦虑指数是多少？", opts: ["100% 极度焦虑", "心态已崩"] }, // [cite: 49-50]
+                { bot: "收到反馈！正在为您转接‘意念发货专员’，在此之前，您可以继续描述您的问题，小美将尽力解答哦。", opts: [], unlockInput: true } // [cite: 51]
+            ]
+        },
+        travel: {
+            title: "出行定位助手",
+            steps: [
+                { bot: "由于当前区域存在‘高维坐标干扰’，您的视觉定位可能与司机的莫比乌斯环导航存在偏差。请选择您的视觉参照物。", opts: ["路边大树/招牌", "我不知道在哪"] }, // [cite: 54-55]
+                { bot: "正在进行地图层级递归校准……校准失败。系统判定您当前处于‘薛定谔的上车点’。是否愿意通过文字描述您的周围环境？", opts: ["愿意描述", "直接取消订单"] }, // [cite: 56-57]
+                { bot: "为了保障安全，请确认您已开启‘反向步行导航’，并原地旋转 360 度以对准卫星。", opts: ["已旋转完成", "晕了，拒绝旋转"] }, // [cite: 58-59]
+                { bot: "检测到重力感应异常。为了更精准地折磨……不，是寻找您的位置，请在下方输入您的详细特征。", opts: [], unlockInput: true } // [cite: 60]
+            ]
+        }
+    };
+
+    let currentScene = 'finance';
+    let currentStepIndex = -1; // -1 表示初始欢迎状态
+    let isWaiting = false;
+
+    const chatArea = document.getElementById('chat-area');
+    const textInput = document.getElementById('text-input');
+    const sendBtn = document.getElementById('send-btn');
+    const overlay = document.getElementById('overlay');
+
+    // 工具：滚动到底部
+    function scrollToBottom() {
+        chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    // 渲染消息气泡
+    function addMessage(text, role = 'bot') {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `msg ${role}`;
+        msgDiv.innerText = text;
+        chatArea.appendChild(msgDiv);
+        scrollToBottom();
+    }
+
+    // 强制3秒等待动画 
+    async function showTypingDelay() {
+        isWaiting = true;
+        const typingIndicator = document.createElement('div');
+        typingIndicator.className = 'typing';
+        typingIndicator.innerHTML = '客服输入中<span>.</span><span>.</span><span>.</span>';
+        chatArea.appendChild(typingIndicator);
+        scrollToBottom();
+        
+        await new Promise(r => setTimeout(r, 3000));
+        
+        if (chatArea.contains(typingIndicator)) {
+            chatArea.removeChild(typingIndicator);
+        }
+        isWaiting = false;
+    }
+
+    // 渲染按钮组 [cite: 9]
+    function renderOptions(options) {
+        if (!options || options.length === 0) return;
+        const container = document.createElement('div');
+        container.className = 'options-container';
+        
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.innerText = opt;
+            btn.onclick = () => {
+                if(isWaiting) return;
+                // 禁用所有兄弟按钮
+                Array.from(container.children).forEach(b => b.classList.add('disabled'));
+                handleUserChoice(opt);
+            };
+            container.appendChild(btn);
+        });
+        chatArea.appendChild(container);
+        scrollToBottom();
+    }
+
+    // 处理按钮点击事件
+    async function handleUserChoice(choiceText) {
+        addMessage(choiceText, 'user');
+        currentStepIndex++;
+        
+        await showTypingDelay();
+
+        const sceneData = scenes[currentScene].steps;
+        if (currentStepIndex < sceneData.length) {
+            const step = sceneData[currentStepIndex];
+            addMessage(step.bot, 'bot');
+            
+            if (step.unlockInput) {
+                // 开启自由输入框 
+                textInput.disabled = false;
+                textInput.placeholder = "请输入您的问题...";
+                sendBtn.style.display = 'block';
+                textInput.focus();
+            } else {
+                renderOptions(step.opts);
+            }
+        }
+    }
+
+    // 自由输入阶段：发送文本及按场景隔离的关键词逻辑
+    async function handleSendText() {
+        const text = textInput.value.trim();
+        if (!text || isWaiting) return;
+        
+        addMessage(text, 'user');
+        textInput.value = '';
+        textInput.disabled = true;
+        sendBtn.style.display = 'none';
+        
+        // 强制 3 秒打字延迟
+        await showTypingDelay();
+
+        // --- 核心关键词判定逻辑 ---
+        let finalReply = "";
+        let isMatched = false;
+
+        // 1. 获取当前所在场景专属的关键词库
+        const currentMappings = sceneKeywordMappings[currentScene] || [];
+
+        // 2. 遍历专属关键词表，寻找匹配
+        for (let mapping of currentMappings) {
+            // 将用户的输入转为小写，以便兼容英文关键词如"balance", "refund"
+            const lowerText = text.toLowerCase();
+            if (mapping.keywords.some(keyword => lowerText.includes(keyword.toLowerCase()))) {
+                finalReply = mapping.reply;
+                isMatched = true;
+                break; // 匹配到第一个触发词就跳出
+            }
+        }
+
+        // 3. 如果当前场景的专属词没命中，则从离谱答案库里随机抽取一句保底
+        if (!isMatched) {
+            finalReply = absurdReplies[Math.floor(Math.random() * absurdReplies.length)];
+        }
+
+        // 机器人发送回复
+        addMessage(finalReply, 'bot');
+        
+        // 触发 5 秒强制重启循环
+        triggerResetLoop();
+    }
+
+    // 循环逻辑：5秒重置 [cite: 15-19]
+    function triggerResetLoop() {
+        overlay.style.display = 'block'; // 阻止用户交互
+        let countdown = 8;
+        
+        const sysMsg = document.createElement('div');
+        sysMsg.style.textAlign = 'center';
+        sysMsg.style.color = '#999';
+        sysMsg.style.fontSize = '12px';
+        sysMsg.style.marginTop = '10px';
+        chatArea.appendChild(sysMsg);
+        
+        const timer = setInterval(() => {
+            sysMsg.innerText = `系统内存过载，${countdown} 秒后强制重启...`;
+            scrollToBottom();
+            countdown--;
+            if (countdown < 0) {
+                clearInterval(timer);
+                resetScene(currentScene, true);
+            }
+        }, 1000); // [cite: 17]
+    }
+
+    // 重置或切换场景 [cite: 7, 18, 19]
+    async function resetScene(sceneId, isLoopReset = false) {
+        chatArea.innerHTML = '';
+        currentStepIndex = -1;
+        isWaiting = false;
+        overlay.style.display = 'none';
+        
+        textInput.disabled = true;
+        textInput.placeholder = "请先选择上方问题"; // [cite: 28]
+        textInput.value = '';
+        sendBtn.style.display = 'none';
+
+        if (isLoopReset) {
+            addMessage("您好，刚才由于系统内存过载，我忘记了所有的不愉快，请重新开始您的受挫之旅。", 'bot'); // 
+        } else {
+            addMessage(`您好，欢迎进入${scenes[sceneId].title}。请选择您要办理的业务：`, 'bot');
+        }
+
+        // 渲染第一步的初始按钮（取自各场景第一步的前置选项）
+        let initialOpts = [];
+        if(sceneId === 'finance') initialOpts = ["查询实时余额", "下载往期账单"]; // [cite: 35]
+        if(sceneId === 'ecommerce') initialOpts = ["查询预计发货时间", "催促仓库尽快发货"]; // [cite: 44]
+        if(sceneId === 'travel') initialOpts = ["定位偏移，找不到车", "司机不动，位置错误"]; // [cite: 53]
+        
+        renderOptions(initialOpts);
+    }
+
+    // 切换顶部 Tab [cite: 7]
+    function switchScene(sceneId) {
+        if (isWaiting || overlay.style.display === 'block') return; // 阻断切换
+        
+        currentScene = sceneId;
+        document.getElementById('scene-title').innerText = scenes[sceneId].title; // [cite: 22]
+        
+        // 更新 Tab 样式
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(`tab-${sceneId}`).classList.add('active');
+
+        resetScene(sceneId);
+    }
+
+    // 绑定回车发送事件
+    textInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') handleSendText();
+    });
+
+    // 初始化运行
+    window.onload = () => {
+        resetScene('finance');
+    };
+
+</script>
+</body>
+</html>
