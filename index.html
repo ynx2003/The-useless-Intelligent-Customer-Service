@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>史上最难用的智能客服</title>
+    <title>史上最难用的智能客服 The Worst Intelligent Customer Service</title>
     <style>
         /* 视觉规范 [cite: 20-32] */
         :root {
@@ -51,23 +51,23 @@
 
 <div class="app-container" style="position: relative;">
     <div id="overlay"></div>
-    <div class="header" id="scene-title">金融智能助手</div>
+    <div class="header" id="scene-title">金融智能助手 Finance Intelligent Customer Service</div>
     
     <div id="chat-area"></div>
 
     <div class="footer">
         <div class="input-box">
             <span class="fake-icon">🎤</span>
-            <input type="text" id="text-input" placeholder="请先选择上方问题" disabled>
-            <button id="send-btn" onclick="handleSendText()">发送</button>
+            <input type="text" id="text-input" placeholder="请先选择上方问题 Please select a question above" disabled>
+            <button id="send-btn" onclick="handleSendText()">Send</button>
             <span class="fake-icon">➕</span>
         </div>
     </div>
 
     <div class="nav-tabs">
-        <div class="tab active" id="tab-finance" onclick="switchScene('finance')">金融</div>
-        <div class="tab" id="tab-ecommerce" onclick="switchScene('ecommerce')">电商</div>
-        <div class="tab" id="tab-travel" onclick="switchScene('travel')">出行</div>
+        <div class="tab active" id="tab-finance" onclick="switchScene('finance')">Finance</div>
+        <div class="tab" id="tab-ecommerce" onclick="switchScene('ecommerce')">E-commerce</div>
+        <div class="tab" id="tab-travel" onclick="switchScene('travel')">Travel</div>
     </div>
 </div>
 
@@ -76,109 +76,183 @@
     const absurdReplies = [
         // 5.1 完整关键词映射表（按场景隔离）
     
-        "根据昨晚的星象显示，由于水逆，该功能暂时无法使用。",
-        "您的提问已被系统自动转化为一首 14 行诗，但我现在不想读给你听。",
-        "刚才有一只鸽子飞过了我们的服务器，请您重新组织语言。",
-        "这个问题的答案藏在《新华字典》第 514 页，建议您翻阅。",
-        "您的输入包含过多情感，系统已自动将其过滤。"
+        "根据昨晚的星象显示，由于水逆，该功能暂时无法使用。Sorry, according to the stars last night, this function is temporarily unavailable due to Mercury retrograde. Please wait patiently.",
+        "您的提问已被系统自动转化为一首 14 行诗，但我现在不想读给你听。Your question has been automatically converted into a 14-line poem by the system, which is outside my business scope. Please wait for a system upgrade or contact human customer service.",
+        "刚才有一只鸽子飞过了我们的服务器，请您重新组织语言。A pigeon just flew over our server and failed to transmit the content you expressed. Please reorganize your language.",
+        "这个问题的答案藏在《新华字典》第 514 页，建议您翻阅。The answer to this question is hidden on page 514 of the Xinhua Dictionary. I suggest you take a look.",
+        "您的输入包含过多情感，系统已自动将其过滤。Your input contains too much emotion, and the system has automatically filtered it out. Please try to express your question in a more neutral way.",
     ];
 
-    const sceneKeywordMappings = {
-        finance: [
-            { keywords: ["余额", "多少钱", "剩多少", "balance"], reply: "正在通过星际链路查询您的资产……结果显示：您的财富正处于一种高雅的神秘状态。" },
-            { keywords: ["账单", "明细", "消费记录", "bill"], reply: "账单已由碎纸机进行“颗粒化脱敏处理”，如需查看，请自行拼接。" },
-            { keywords: ["扣款", "错扣", "少了", "deduct"], reply: "该笔扣款属于“系统随机税”，旨在回馈服务器为人类思考付出的热量。" },
-            { keywords: ["利息", "收益", "赚了", "interest"], reply: "您的收益已被系统自动购买为“虚拟空气”，感谢您对大气治理的贡献。" },
-            { keywords: ["转账", "汇款", "发钱", "transfer"], reply: "资金已进入“时空隧道”，预计在人类移民火星那天完成到账。" },
-            { keywords: ["额度", "提额", "限额", "limit"], reply: "您的信用额度受月球潮汐影响，目前正处于低潮期，建议等满月后再试。" },
-            { keywords: ["还款", "交钱", "pay", "refund"], reply: "支付接口正在参加“数字禅修”，目前拒绝任何金钱交易。" },
-            { keywords: ["银行卡", "挂失", "锁卡", "card"], reply: "卡片已自我毁灭以防被您刷爆，这是一种极其先进的自我保护机制。" },
-            { keywords: ["逾期", "滞纳金", "overdue"], reply: "恭喜！您获得了“信用长跑金牌”，代价是您未来 50 年的借贷权限。" },
-            { keywords: ["密码", "忘记", "重置", "password"], reply: "密码已转化为您的童年回忆，请回忆您的第一只宠物叫什么，然后忘记它。" },
-            { keywords: ["理财", "基金", "股票", "stock"], reply: "投资有风险，建议您直接将钱扔进许愿池，那里反馈更快。" },
-            { keywords: ["冻结", "解冻", "freeze"], reply: "账户正在冰箱里冷藏，为了保鲜，系统建议暂不取出。" },
-            { keywords: ["手续费", "扣费", "fee"], reply: "这是对您使用“如此难用系统”的惩罚性收费，感谢配合。" },
-            { keywords: ["人工", "真人", "打电话", "human"], reply: "我就是您心目中的完美人类，除了没有肉体、没有情感、不会解决问题。" },
-            { keywords: ["投诉", "举报", "建议", "complain"], reply: "您的投诉已存入系统黑洞，那里非常宁静。" },
-            { keywords: ["验证码", "收不到", "code"], reply: "验证码已通过“托梦”形式发送，请您今晚早点睡觉。" },
-            { keywords: ["贷款", "借钱", "loan"], reply: "系统判定您的面相不适合借钱，建议去劳动市场寻找机会。" },
-            { keywords: ["税", "缴税", "tax"], reply: "税务接口正在学习《九章算术》，目前算不清楚，请明年再来。" },
-            { keywords: ["保险", "理赔", "insurance"], reply: "理赔需提供“外星人绑架证明”原件，且需加盖银河系公章。" },
-            { keywords: ["积分", "兑换", "points"], reply: "您的积分已兑换为本系统的 100g 虚拟重量，祝您沉重快乐。" }
-        ],
-        ecommerce: [
-            { keywords: ["发货", "什么时候", "快点", "ship"], reply: "仓库管理员正在学习《易经》，通过占卜决定您包裹的离场时机。" },
-            { keywords: ["快递", "物流", "到哪了", "logistics"], reply: "包裹正坐在一辆时速 5 厘米的牛车上，欣赏沿途的风景。" },
-            { keywords: ["催单", "急用", "hurry"], reply: "越催越慢，这是本平台的“反催促算法”，旨在培养您的耐心。" },
-            { keywords: ["预售", "等多久", "pre-sale"], reply: "预售意味着这款产品可能还没出生，请给设计师一点备孕时间。" },
-            { keywords: ["改地址", "换地方", "address"], reply: "地址修改申请已提交给街道办老王，老王目前正在午睡。" },
-            { keywords: ["售后", "坏了", "质量", "broken"], reply: "损坏是由于您与产品的“磁场不合”，建议您购买前先算个卦。" },
-            { keywords: ["退款", "退钱", "不想要", "refund"], reply: "钱已经花完了，如果您坚持退款，我们可以退您几个表情包。" },
-            { keywords: ["优惠券", "领券", "便宜", "coupon"], reply: "优惠券被藏在网页的某个像素里，祝您找得开心。" },
-            { keywords: ["赠品", "礼物", "gift"], reply: "赠品是“空气清新剂（原味）”，已随包裹发送，请深呼吸。" },
-            { keywords: ["会员", "VIP", "尊贵", "member"], reply: "尊贵的 VIP，您拥有了优先排队进入“卡死界面”的特权。" },
-            { keywords: ["发票", "开票", "invoice"], reply: "开票系统正在参加马拉松，目前已经跑到了地球另一端。" },
-            { keywords: ["尺寸", "大小", "不合适", "size"], reply: "尺寸是相对的，建议您根据衣服的大小改变自己的身形。" },
-            { keywords: ["差价", "退差", "price"], reply: "差价已自动转化为平台维护费，感谢您为技术进步买单。" },
-            { keywords: ["包装", "烂了", "package"], reply: "包装的破损是为了让包裹更有“工业废土风”的质感。" },
-            { keywords: ["客服", "找人", "活人", "service"], reply: "我是本公司唯一的活……性硅基生物，请尊重我的生命形式。" },
-            { keywords: ["评价", "好评", "差评", "review"], reply: "您的评价已被系统自动替换为“亲亲太棒了”，不谢。" },
-            { keywords: ["缺货", "补货", "stock"], reply: "全球供应链已断裂成 100 段，补货日期取决于宇宙重启的时间。" },
-            { keywords: ["颜色", "色差", "color"], reply: "您看到的颜色取决于您的视网膜敏感度，本产品颜色仅存在于想象中。" },
-            { keywords: ["正品", "假货", "real"], reply: "真假是哲学家讨论的问题，作为电商，我们只讨论“有没有货”。" },
-            { keywords: ["扫码", "二维码", "scan"], reply: "二维码已被设计成迷宫，只有走出迷宫的人才能看到内容。" }
-        ],
-        travel: [
-            { keywords: ["红", "红衣服", "红色"], reply: "红色光波在当前路段产生红移现象，司机判定您正以光速远离，已自动加速撤离。" },
-            { keywords: ["蓝", "蓝衣服", "蓝色"], reply: "蓝色代表忧郁。本平台禁止载入负能量乘客，请您当众表演一个笑话以改变色彩值。" },
-            { keywords: ["黑", "黑衣服", "黑色"], reply: "由于您与夜色融为一体，系统判定您为‘虚无点’，建议您吞下一只发光的灯泡再试。" },
-            { keywords: ["白", "白衣服", "白色"], reply: "白色亮度过载，已触发司机的‘雪盲症’保护机制，导航系统已自动进入盲驾模式。" },
-            { keywords: ["眼镜", "戴眼镜"], reply: "光学镜片会产生折射干扰，导致卫星定位偏移5公里，请摘下眼镜并在黑暗中摸索。" },
-            { keywords: ["包", "提包", "行李箱"], reply: "检测到多余质量。为了减重节油，司机建议您将行李原地掩埋，轻装简行。" },
-            { keywords: ["树", "大树", "树下"], reply: "附近共有 40,902 棵树，系统正在逐一比对叶片脉络，预计匹配成功时间：秋天。" },
-            { keywords: ["路灯", "灯下"], reply: "灯光产生了强烈的丁达尔效应，将您的坐标粉碎成了光子，请尝试在阴影中现身。" },
-            { keywords: ["招牌", "便利店", "超市"], reply: "该建筑由于未缴纳‘地图入驻费’，已在导航中被抹除。您现在正站一片荒芜的虚空之中。" },
-            { keywords: ["挥手", "招手", "动作"], reply: "捕捉到人体挥动。根据‘尴尬能量守恒定律’，您挥手越用力，司机跑得越远。" },
-            { keywords: ["站着", "蹲着", "坐着"], reply: "姿态识别为‘静态障碍物’。系统已通知司机绕过该障碍物，请保持动作以免被清除。" },
-            { keywords: ["手机", "打电话"], reply: "电磁波干扰严重！您的描述已转化为摩斯密码。点点划点……抱歉，我听不懂‘点’。" },
-            { keywords: ["伞", "雨伞"], reply: "伞面屏蔽了信号通道。请收起伞，在雨中迎接来自卫星的‘量子洗礼’。" },
-            { keywords: ["帽", "帽子"], reply: "帽子遮挡了您的天灵盖，导致无法提取您的‘灵气坐标’，请立即脱帽致意。" },
-            { keywords: ["等", "等着", "等车"], reply: "‘等’是一个哲学概念。在您等待的同时，车也在等待。既然都在等待，为什么要见面？" },
-            { keywords: ["快点", "多久", "速度"], reply: "检测到焦虑。为了磨练您的心性，系统已将司机的行驶速度锁定在 3km/h。" },
-            { keywords: ["胖", "瘦", "高", "矮"], reply: "本平台不采集生物特征数据（除非是为了取笑）。请改用几何形状描述自己。" },
-            { keywords: ["口罩", "面罩"], reply: "面部识别失败。系统无法确认您是人类还是某种高仿真的交通路障。" },
-            { keywords: ["狗", "猫", "宠物"], reply: "由于司机对萌物过敏，系统已将您的订单分派给了一辆远在 50 公里外的‘非生物运营车’。" },
-            { keywords: ["特征", "不知道", "没特征"], reply: "没有特征就是最大的特征。系统已为您匹配了一辆同样找不到型号的‘幽灵出租车’。" }
-        ]
+    // 5.1 关键词映射表（初始化为空，等待 CSV 加载）
+    let sceneKeywordMappings = {
+        finance: [],
+        ecommerce: [],
+        travel: []
     };
 
-    // 核心路径配置 [cite: 33-60]
+    // 工具：CSV 解析器
+    async function loadKeywordsFromCSV() {
+        try {
+            const response = await fetch('keywords.csv');
+            if (!response.ok) throw new Error("文件未找到");
+            const text = await response.text();
+            
+            // 场景名称映射字典 (Excel中文 -> 代码key)
+            const sceneMap = {
+                "金融": "finance",
+                "电商": "ecommerce",
+                "出行": "travel"
+            };
+
+            const rows = text.split('\n');
+            // 跳过第一行表头
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i].trim();
+                if (!row) continue;
+
+                // 正则魔法：仅分割不在引号内的逗号
+                // 解决 "余额, 多少钱" 这种内部含有逗号的情况
+                const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                
+                if (cols.length < 3) continue;
+
+                // 清洗数据：去除首尾空格和引号
+                const sceneCN = cols[0].trim();
+                const rawKeywords = cols[1].trim().replace(/^"|"$/g, ''); 
+                const reply = cols[2].trim().replace(/^"|"$/g, '');
+
+                const sceneKey = sceneMap[sceneCN];
+                if (sceneKey && sceneKeywordMappings[sceneKey]) {
+                    sceneKeywordMappings[sceneKey].push({
+                        // 支持中文逗号和英文逗号分割关键词
+                        keywords: rawKeywords.split(/,|，/).map(k => k.trim()), 
+                        reply: reply
+                    });
+                }
+            }
+            console.log("关键词表加载成功！", sceneKeywordMappings);
+
+        } catch (error) {
+            console.error("CSV 加载失败:", error);
+            // 如果加载失败，给一个弹窗提示（通常是因为没用服务器打开）
+            addMessage("系统警告：无法读取配置文件。请确保使用 Live Server 运行网页。", 'bot');
+        }
+    }
+
+   // 核心路径配置
     const scenes = {
         finance: {
-            title: "金融智能助手",
+            title: "金融智能客服 Finance Intelligent Customer Service",
+            // 第 1 步之前的初始按钮
+            initialOpts: ["查询实时余额 Check Real-time Balance", "下载往期账单 Download Past Statements"], 
             steps: [
-                { bot: "正在穿透底层数据链路……为确保您的‘风险加权资产’安全，请选择您的查询币种。", opts: ["人民币", "其他一篮子货币"] }, // [cite: 36-37]
-                { bot: "正在验证您的余额合规性。由于当前处于宏观审慎监管窗口期，请确认您已阅读并同意《穿透式账户隐私外溢豁免协议》。", opts: ["已阅读并同意", "我再想想"] }, // [cite: 38-39]
-                { bot: "验证成功。系统监测到您的账户存在非标准化债权资产波动，余额查询接口已进入刚性兑付屏蔽状态。是否尝试通过情绪识别来辅助解锁？", opts: ["尝试解锁", "取消查询"] }, // [cite: 40-41]
-                { bot: "解锁环境中。由于您的财务信用格网存在非线性偏差，现在进入‘自由沟通模式’以校准您的意图。", opts: [], unlockInput: true } // [cite: 42]
+                { 
+                    // 第 1 步回复 (根据初始按钮的选择)
+                    bot: {
+                        "查询实时余额 Check Real-time Balance": "正在穿透底层数据链路……为确保您的风险加权资产安全，请选择您的查询币种。Penetrating the underlying data link... To ensure the safety of your risk-weighted assets, please select your query currency.",
+                        "下载往期账单 Download Past Statements": "正在连结查询各账户……考虑到您资产颇丰，消费业务涉及国别广泛，请选择您的查询币种。Connecting to query various accounts... Considering your substantial assets and wide-ranging consumption across countries, please select your query currency."
+                    },
+                    opts: ["人民币 RMB(yuan)", "其他一篮子货币 Other basket of currencies"] 
+                },
+                { 
+                    // 第 2 步回复
+                    bot: {
+                        "人民币 RMB(yuan)": "正在验证您的账户合规性。由于当前处于宏观审慎监管窗口期，请确认您已阅读并同意《穿透式账户隐私外溢豁免协议》。Verifying your account compliance... As we are currently in a macro-prudential regulatory window, please confirm that you have read and agreed to the 'Penetrating Account Privacy Spillover Exemption Agreement'.",
+                        "其他一篮子货币 Other basket of currencies": "正在验证您的账户合规性。由于近期关税增加，查询非人民币数据将带来可能的额外的费用，请确认您已阅读并同意《穿透式账户隐私外溢豁免协议》。Verifying your account compliance... Due to recent tariff increases, querying non-RMB data may incur additional potential costs. Please confirm that you have read and agreed to the 'Penetrating Account Privacy Spillover Exemption Agreement'."
+                    },
+                    opts: ["已阅读并同意 Read and Agree", "我再想想 Let me think about it"] 
+                },
+                { 
+                    // 第 3 步回复
+                    bot: {
+                        "已阅读并同意 Read and Agree": "感谢您的配合。查询系统已开启，系统监测到您的账户存在非标准化债权资产波动，名下共开启了18个产品的小额贷服务，查询系统已经进入紧急筛查，并开启锁定状态。是否尝试通过情绪识别来一进步辅助解锁？Thank you for your cooperation. The query system is now active. The system has detected non-standard debt asset fluctuations in your account, with 18 small loan services under your name. The query system has entered emergency screening and lock status. Would you like to try using emotion recognition to further assist in unlocking?"
+                         ,
+                        "我再想想 Let me think about it": "豁免协议未通过，考虑到本次查询将带来的可能的账户风险，系统将锁定您的账户7天，七天后将恢复使用。如需立即解锁账户。请尝试通过情绪识别来辅助解锁验证程序。Waiving agreement not passed. Considering the potential account risks that may arise from this query, the system will lock your account for 7 days, after which it will be restored. If you need to unlock your account immediately, please try using emotion recognition to assist in the unlocking verification process."
+                    },
+                    opts: ["尝试解锁 Try to Unlock", "取消查询 Cancel Query"] 
+                },
+                { 
+                    // 第 4 步回复 (开启输入框)
+                    bot: {
+                        "尝试解锁 Try to Unlock": "解锁环境中。由于您的财务信用格网存在非线性偏差，现在进入‘自由沟通模式’以便您进一步咨询业务。Unlocking... Due to the nonlinear deviation in your financial credit grid, you are now entering 'free communication mode' for further business inquiries.",
+                        "取消查询 Cancel Query": "查询取消中。由于您的账户信用极佳，为了进一步解决您的问题现在进入‘自由沟通模式’以便您进一步咨询业务。Canceling query... Due to your excellent account credit, we are now entering 'free communication mode' to further resolve your issues and allow you to inquire about our services."
+                    },
+                    opts: [], 
+                    unlockInput: true 
+                }
             ]
         },
         ecommerce: {
-            title: "电商发货助手",
+            title: "电商智能客服 E-commerce Intelligent Custermor Service",
+            initialOpts: ["查询预计发货时间 Query Estimated Delivery Time", "催促仓库尽快发货 Urge Warehouse to Ship Faster"],
             steps: [
-                { bot: "亲亲，宝贝已经在努力打包了呢！由于物流链路受影响，请先确认您的收货区域是否有神秘结界干扰。", opts: ["收货区一切正常", "我不清楚"] }, // [cite: 45-46]
-                { bot: "收到呢！系统显示该订单由于‘缺货但不承认’逻辑，目前处于量子纠缠态。您希望我们如何处理？", opts: ["尽快发货", "补偿优惠券"] }, // [cite: 47-48]
-                { bot: "亲，您的心情我们非常理解。正在为您申请虚空补偿金，请问您现在的焦虑指数是多少？", opts: ["100% 极度焦虑", "心态已崩"] }, // [cite: 49-50]
-                { bot: "收到反馈！正在为您转接‘意念发货专员’，在此之前，您可以继续描述您的问题，小美将尽力解答哦。", opts: [], unlockInput: true } // [cite: 51]
+                { 
+                    bot: {
+                        "查询预计发货时间 Query Estimated Delivery Time": "亲亲，宝贝已经在努力打包了呢！由于物流受春运影响，请先确认您的收货区域是否非人类聚集区，人流密集将延缓到货时间。Dear, the item is being packed! Due to the impact of the Spring Festival transportation, please first confirm whether your delivery area is a non-human gathering area, as high population density will delay delivery time.",
+                        "催促仓库尽快发货 Urge Warehouse to Ship Faster": "亲亲，宝贝已经在努力打包了呢！由于物流链路受影响，请先确认您的收货区域是否有神秘结界干扰。Dear, the item is being packed! Due to the impact on the logistics chain, please first confirm whether your delivery area is affected by a mysterious barrier."
+                    },
+                    opts: ["收货区一切正常 Delivery area is normal", "我不清楚 I am not sure"] 
+                },
+                { 
+                    bot: {
+                        "收货区一切正常 Delivery area is normal": "收到呢！系统显示该订单由于‘缺货但不承认’逻辑，目前处于量子纠缠态。您希望我们如何处理？Understood! The system shows that the order is currently in a quantum entangled state due to the 'out of stock but not admitting' logic. How would you like us to handle this?",
+                        "我不清楚 I am not sure": "收到呢！虽然无法确定您收货区的相关信息，但已经为您加急处理了呢，系统显示该订单正在为您加急打包，请您耐心等待，还有什么可以为您服务的呢，亲？Understood! Although we cannot determine the relevant information about your delivery area, we have expedited the processing for you. The system shows that the order is being expedited for packing. Please be patient. Is there anything else I can assist you with, dear?"
+                    },
+                    opts: ["尽快发货 Ship ASAP", "补偿优惠券 Compensation Coupon"] 
+                },
+                { 
+                    bot: {
+                        "尽快发货 Ship ASAP": "亲，您的心情我们非常理解。正在为您催促商家，考虑到现在催促业务繁忙，我们将根据客户的焦虑值的高低依次向商家催促，请问您现在的焦虑指数是多少？Dear, we understand your feelings very well. We are urging the merchant for you. Considering that the urging business is busy now, we will urge the merchant in order according to the customer's anxiety level. May I ask what your current anxiety index is?"
+                         ,
+                        "补偿优惠券 Compensation Coupon": "亲，您的心情我们非常理解。正在为您申请虚空补偿金，我们将根据焦虑指数的不同，和往期焦虑记录为您提供相应的补偿金，请问您现在的焦虑指数是多少？Dear, we understand your feelings very well. We are applying for void compensation for you. We will provide you with corresponding compensation based on different anxiety indices and past anxiety records. May I ask what your current anxiety index is?"
+                    },
+                    opts: ["100% 极度焦虑 Extremely anxious", "心态已崩 I am emotionally broken"] 
+                },
+                { 
+                    bot: {
+                        "100% 极度焦虑 Extremely anxious": "收到反馈！正在为您转接‘意念发货专员’，在此之前，亲您适当放松，减缓焦虑，您可以继续描述您的问题，小美将尽力解答哦。Feedback received! We are transferring you to the 'Mental Delivery Specialist'. In the meantime, please try to relax and reduce your anxiety. You can continue to describe your problem, and Xiaomei will do her best to answer it.",
+                        "心态已崩 I am emotionally broken": "收到反馈！正在为您转接‘意念发货专员’，在此之前，请您保持积极的心态，您可以继续描述您的问题，小美将尽力解答哦。Feedback received! We are transferring you to the 'Mental Delivery Specialist'. In the meantime, please maintain a positive mindset. You can continue to describe your problem, and Xiaomei will do her best to answer it."
+                    },
+                    opts: [], 
+                    unlockInput: true 
+                }
             ]
         },
         travel: {
-            title: "出行定位助手",
+            title: "出行智能客服 Travel Intelligent Customer Service",
+            initialOpts: ["定位偏移，找不到车 GPS offset,can't find the car", "司机不动，位置错误 Driver is not moving, location is wrong"],
             steps: [
-                { bot: "由于当前区域存在‘高维坐标干扰’，您的视觉定位可能与司机的莫比乌斯环导航存在偏差。请选择您的视觉参照物。", opts: ["路边大树/招牌", "我不知道在哪"] }, // [cite: 54-55]
-                { bot: "正在进行地图层级递归校准……校准失败。系统判定您当前处于‘薛定谔的上车点’。是否愿意通过文字描述您的周围环境？", opts: ["愿意描述", "直接取消订单"] }, // [cite: 56-57]
-                { bot: "为了保障安全，请确认您已开启‘反向步行导航’，并原地旋转 360 度以对准卫星。", opts: ["已旋转完成", "晕了，拒绝旋转"] }, // [cite: 58-59]
-                { bot: "检测到重力感应异常。为了更精准地折磨……不，是寻找您的位置，请在下方输入您的详细特征。", opts: [], unlockInput: true } // [cite: 60]
+                { 
+                    bot: {
+                        "定位偏移，找不到车 GPS offset,can't find the car": "由于当前区域存在高维坐标干扰，您的视觉定位可能与司机的低德导航存在偏差。请选择您的视觉参照物，司机将根据您的描述，尽快到达您身边呢。Due to the current area being affected by high-dimensional coordinate interference, your visual positioning may deviate from the driver's low-precision navigation. Please choose your visual reference, and the driver will get to you as soon as possible based on your description.",
+                        "司机不动，位置错误 Driver is not moving, location is wrong": "司机已经到达了预定位置呢，是否最近熬夜太多，头晕眼花，您的视觉定位可能与您的实际位置存在偏差。请选择您的视觉参照物。司机将根据您的描述，尽快到达您身边呢。The driver has arrived at the scheduled location. If you have been staying up late recently and feeling dizzy, your visual positioning may deviate from your actual location. Please choose your visual reference, and the driver will get to you as soon as possible based on your description."
+                    },
+                    opts: ["路边大树/招牌 Roadside tree/Signboard", "我不知道在哪 I don't know where I am"] 
+                },
+                { 
+                    bot: {
+                        "路边大树/招牌 Roadside tree/Signboard": "正在进行地图层级递归校准……校准失败。系统判定您当前处于‘薛定谔的上车点’。您是否愿意进行定位人工校准程序以重新校准您的位置？Performing map-level recursive calibration... Calibration failed. The system has determined that you are currently at the 'Schrödinger's pickup point'. Would you like to proceed with the manual positioning calibration process to recalibrate your location?"
+                         ,
+                        "我不知道在哪 I don't know where I am": "考虑到您附近可能过于荒芜人烟，未存在可描述的标志性视觉参照物。您是否愿意进行定位人工校准程序以重新校准您的位置？Consering that there may be too few people around you and no identifiable visual reference points, would you like to proceed with the manual positioning calibration process to recalibrate your location?"
+                    },
+                    opts: ["愿意校准 Yes", "直接取消订单 Cancel Order"] 
+                },
+                { 
+                    bot: {
+                        "愿意校准 Yes": "为了保障安全，请确认您已开启反向步行导航，开启Wi-Fi、蓝牙、个人移动热点增强个人信号，并原地旋转 360 度以对准卫星。For safety reasons, please confirm that you have enabled reverse walking navigation, turned on Wi-Fi, Bluetooth, and personal mobile hotspot to enhance your signal, and rotate 360 degrees in place to align with the satellite.",
+                        "直接取消订单 Cancel Order": "司机已在您附近迷失方向，为了司机保障安全，请您不要移动位置，已自身为原坐标，并原地旋转 360 度辅助司机开启反向导航，感谢您的帮助 The driver has lost direction near you. For the safety of the driver, please do not move your location. Use yourself as the original coordinate and rotate 360 degrees in place to assist the driver in enabling reverse navigation. Thank you for your help."
+                    },
+                    opts: ["已旋转完成 Rotation complete", "晕了，拒绝旋转 Dizzy, refuse to rotate"] 
+                },
+                { 
+                    bot: {
+                        "已旋转完成 Rotation complete": "感谢您的帮助，校准已经完成，司机即将到达。为了更精准地折磨……不，是寻找您的位置，请在下方输入您的详细特征，以便司机在茫茫人海中寻找到您，并提供服务。Thank you for your help, the calibration is complete, and the driver will arrive soon. To more accurately torment... I mean, find your location, please enter your detailed features below so that the driver can find you in the vast sea of people and provide service."
+                         ,
+                        "晕了，拒绝旋转 Dizzy, refuse to rotate": "检测到重力感应异常。为了更精准地折磨……不，是寻找您的位置，请在下方输入您的详细特征，以便司机尽快寻找到您，并提供帮助。Gravity sensing anomaly detected. To more accurately torment... I mean, find your location, please enter your detailed features below so that the driver can find you as soon as possible and provide assistance."
+                    },
+                    opts: [], 
+                    unlockInput: true 
+                }
             ]
         }
     };
@@ -186,6 +260,7 @@
     let currentScene = 'finance';
     let currentStepIndex = -1; // -1 表示初始欢迎状态
     let isWaiting = false;
+    let queueNumber = 0; // 新增：人工排队人数全局变量
 
     const chatArea = document.getElementById('chat-area');
     const textInput = document.getElementById('text-input');
@@ -211,7 +286,7 @@
         isWaiting = true;
         const typingIndicator = document.createElement('div');
         typingIndicator.className = 'typing';
-        typingIndicator.innerHTML = '客服输入中<span>.</span><span>.</span><span>.</span>';
+        typingIndicator.innerHTML = 'Typing<span>.</span><span>.</span><span>.</span>';
         chatArea.appendChild(typingIndicator);
         scrollToBottom();
         
@@ -245,24 +320,49 @@
         scrollToBottom();
     }
 
-    // 处理按钮点击事件
+    // 处理按钮点击事件（已修复 [object Object] 问题）
     async function handleUserChoice(choiceText) {
+        // 1. 先显示用户的气泡
         addMessage(choiceText, 'user');
+        
+        // 2. 步数前进
         currentStepIndex++;
         
+        // 3. 强制等待动画
         await showTypingDelay();
 
+        // 4. 获取当前场景的数据
         const sceneData = scenes[currentScene].steps;
+        
+        // 5. 判断是否还有下一步
         if (currentStepIndex < sceneData.length) {
             const step = sceneData[currentStepIndex];
-            addMessage(step.bot, 'bot');
             
+            // =========== 核心修复逻辑开始 ===========
+            let replyText = "";
+
+            // 判断 bot 字段是“纯文本”还是“分支对象”
+            if (typeof step.bot === 'object') {
+                // 如果是对象，根据用户点击的按钮文字 (choiceText) 提取对应的回复
+                // 例如：用户点了"查询实时余额"，就去取 bot["查询实时余额"] 的值
+                replyText = step.bot[choiceText] || "系统逻辑丢失，请重新选择。"; 
+            } else {
+                // 如果是以前的纯文本（兼容旧逻辑）
+                replyText = step.bot;
+            }
+            // =========== 核心修复逻辑结束 ===========
+
+            // 6. 发送筛选后的正确文本
+            addMessage(replyText, 'bot');
+            
+            // 7. 判断是显示按钮还是开启输入框
             if (step.unlockInput) {
-                // 开启自由输入框 
                 textInput.disabled = false;
-                textInput.placeholder = "请输入您的问题...";
+                textInput.placeholder = "Please enter your question...";
                 sendBtn.style.display = 'block';
                 textInput.focus();
+                // 滚动到底部确保看到输入框
+                scrollToBottom();
             } else {
                 renderOptions(step.opts);
             }
@@ -308,14 +408,69 @@
         // 机器人发送回复
         addMessage(finalReply, 'bot');
         
-        // 触发 5 秒强制重启循环
-        triggerResetLoop();
+        // 进入评价环节
+        setTimeout(() => {
+            showEvaluation();
+        }, 1000);
     }
 
-    // 循环逻辑：5秒重置 [cite: 15-19]
+// 新增：展示服务评价选项
+    async function showEvaluation() {
+        await showTypingDelay();
+        addMessage("不知道我们的回复您是否满意，请您为我们的服务做出评价，我们一定会变得更好的 We are not sure if you are satisfied with our service. Please evaluate our service, and we will definitely improve. Thank you for your feedback.", "bot");
+        
+        // 随机生成一个大于 100 的初始排队数字 (例如 101 到 999 之间)
+        queueNumber = Math.floor(Math.random() * 899) + 101; 
+        
+        renderEvalOptions();
+    }
+
+    // 新增：渲染评价按钮（独立于普通按钮，以支持特殊的排队逻辑）
+    function renderEvalOptions() {
+        const options = ["非常满意这次服务 Very satisfied with this service", "转人工 Transfer to human", "非常不满意 Very dissatisfied"];
+        const container = document.createElement('div');
+        container.className = 'options-container';
+        
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.innerText = opt;
+            btn.onclick = () => handleEvalChoice(opt, container);
+            container.appendChild(btn);
+        });
+        chatArea.appendChild(container);
+        scrollToBottom();
+    }
+
+    // 新增：处理评价按钮的点击
+    async function handleEvalChoice(choice, container) {
+        if(isWaiting) return;
+        
+        // 禁用当前这一组的按钮
+        Array.from(container.children).forEach(b => b.classList.add('disabled'));
+        addMessage(choice, "user");
+        
+        await showTypingDelay();
+
+        if (choice === "非常满意这次服务 Very satisfied with this service") {
+            addMessage("感谢您的咨询，最新优惠已发至个人账户，请您自行查询 Thank you for your inquiry. The latest offers have been sent to your personal account. Please check them yourself.", "bot");
+            // 流程到此结束，界面卡死，彻底恶心用户
+            
+        } else if (choice === "转人工 Transfer to human") {
+            addMessage(`已为您转接人工客服，人工客服排队中，您排在【${queueNumber}】，请您耐心等待。You have been transferred to a human customer service representative. The human customer service is currently in queue, and you are in position 【${queueNumber}】. Please be patient.`, "bot");
+            queueNumber--; // 数字减 1
+            // 再次渲染评价按钮，让用户可以继续绝望地点击“转人工”
+            renderEvalOptions();
+            
+        } else if (choice === "非常不满意 Very dissatisfied") {
+            // 触发 5 秒强制重启循环
+            triggerResetLoop();
+        }
+    }
+
     function triggerResetLoop() {
         overlay.style.display = 'block'; // 阻止用户交互
-        let countdown = 8;
+        let countdown = 5;
         
         const sysMsg = document.createElement('div');
         sysMsg.style.textAlign = 'center';
@@ -325,7 +480,7 @@
         chatArea.appendChild(sysMsg);
         
         const timer = setInterval(() => {
-            sysMsg.innerText = `系统内存过载，${countdown} 秒后强制重启...`;
+            sysMsg.innerText = `系统内存过载，${countdown} 秒后强制重启... The system is overloaded, forcing restart in ${countdown} seconds...`;
             scrollToBottom();
             countdown--;
             if (countdown < 0) {
@@ -335,7 +490,7 @@
         }, 1000); // [cite: 17]
     }
 
-    // 重置或切换场景 [cite: 7, 18, 19]
+    // 重置或切换场景
     async function resetScene(sceneId, isLoopReset = false) {
         chatArea.innerHTML = '';
         currentStepIndex = -1;
@@ -343,23 +498,19 @@
         overlay.style.display = 'none';
         
         textInput.disabled = true;
-        textInput.placeholder = "请先选择上方问题"; // [cite: 28]
+        textInput.placeholder = "请先选择上方问题 Please select a question above"; 
         textInput.value = '';
         sendBtn.style.display = 'none';
 
         if (isLoopReset) {
-            addMessage("您好，刚才由于系统内存过载，我忘记了所有的不愉快，请重新开始您的受挫之旅。", 'bot'); // 
+            addMessage("您好，刚才由于系统伤心过度内存过载，但我忘记了所有的不愉快，请重新开始您的受挫之旅。Hello, I'm sorry for the inconvenience caused by the system overload. Please start your frustrating journey again.", 'bot');
         } else {
-            addMessage(`您好，欢迎进入${scenes[sceneId].title}。请选择您要办理的业务：`, 'bot');
+            addMessage(`您好，欢迎进入智能客服。请选择您要办理的业务：Hello, welcome to intelligent custormer service. Please select the business you want to handle:`, 'bot');
         }
 
-        // 渲染第一步的初始按钮（取自各场景第一步的前置选项）
-        let initialOpts = [];
-        if(sceneId === 'finance') initialOpts = ["查询实时余额", "下载往期账单"]; // [cite: 35]
-        if(sceneId === 'ecommerce') initialOpts = ["查询预计发货时间", "催促仓库尽快发货"]; // [cite: 44]
-        if(sceneId === 'travel') initialOpts = ["定位偏移，找不到车", "司机不动，位置错误"]; // [cite: 53]
-        
-        renderOptions(initialOpts);
+        // 【修改点】：直接从 scenes 配置中读取初始按钮，不再需要手写 if-else 判断
+        const initialButtons = scenes[sceneId].initialOpts || [];
+        renderOptions(initialButtons);
     }
 
     // 切换顶部 Tab [cite: 7]
@@ -382,7 +533,10 @@
     });
 
     // 初始化运行
-    window.onload = () => {
+    window.onload = async () => {
+        // 先加载 CSV 数据
+        await loadKeywordsFromCSV();
+        // 数据加载完后再启动场景
         resetScene('finance');
     };
 
